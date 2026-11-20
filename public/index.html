@@ -2,40 +2,68 @@
 <html>
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video Proxy Generator</title>
+    <title>Video Link Generator</title>
     <style>
         body { font-family: sans-serif; padding: 20px; background: #121212; color: white; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 5px; border: none; box-sizing: border-box; font-size: 16px;}
-        button { padding: 12px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; width: 100%;}
-        #result { margin-top: 20px; word-wrap: break-word; background: #222; padding: 15px; border-radius: 5px; display: none; }
-        a { color: #4da3ff; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 5px; border: none; box-sizing: border-box; font-size: 16px; background: #333; color: white; }
+        button { padding: 12px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; width: 100%; font-weight: bold;}
+        #result { margin-top: 20px; word-wrap: break-word; background: #222; padding: 15px; border-radius: 5px; display: none; border: 1px solid #444; }
+        a { color: #4da3ff; font-size: 18px; }
+        .loading { color: #ffc107; font-size: 14px; margin-top: 10px; display: none; }
     </style>
 </head>
 <body>
     <h2>Video Link Generator</h2>
+    
     <p>Paste your long .mp4 link below:</p>
     <input type="text" id="videoUrl" placeholder="https://fun.reelplexi.com/...">
-    <button onclick="generateLink()">Generate Shareable Link</button>
+    
+    <p>Movie Name (Optional - for the download file):</p>
+    <input type="text" id="movieName" placeholder="e.g. Avengers_Endgame">
+
+    <button onclick="generateLink()">Generate Short Link</button>
     
     <div id="result">
-        <p><strong>Your Link:</strong></p>
+        <p><strong>Your Short Link:</strong></p>
         <a id="finalLink" href="#" target="_blank"></a>
     </div>
+    <div id="loadingText" class="loading">Shortening link... Please wait...</div>
 
     <script>
-        function generateLink() {
+        async function generateLink() {
             const originalUrl = document.getElementById('videoUrl').value;
+            const movieName = document.getElementById('movieName').value;
+            
             if (originalUrl) {
+                document.getElementById('result').style.display = 'none';
+                document.getElementById('loadingText').style.display = 'block';
+
                 const baseUrl = window.location.origin;
-                const proxyLink = baseUrl + '/api/proxy?url=' + encodeURIComponent(originalUrl);
-                
-                const linkElement = document.getElementById('finalLink');
-                linkElement.innerText = proxyLink;
-                linkElement.href = proxyLink;
-                
+                // Combine URL and Name
+                let proxyLink = baseUrl + '/api/proxy?url=' + encodeURIComponent(originalUrl);
+                if (movieName) {
+                    proxyLink += '&name=' + encodeURIComponent(movieName);
+                }
+
+                try {
+                    // Automatically send it to TinyURL to make it short
+                    const response = await fetch('https://tinyurl.com/api-create.php?url=' + encodeURIComponent(proxyLink));
+                    const shortUrl = await response.text();
+
+                    const linkElement = document.getElementById('finalLink');
+                    linkElement.innerText = shortUrl;
+                    linkElement.href = shortUrl;
+                } catch (error) {
+                    // If TinyURL fails, just show the long link
+                    const linkElement = document.getElementById('finalLink');
+                    linkElement.innerText = proxyLink;
+                    linkElement.href = proxyLink;
+                }
+
+                document.getElementById('loadingText').style.display = 'none';
                 document.getElementById('result').style.display = 'block';
             } else {
-                alert("Please paste a link first!");
+                alert("Please paste a video link first!");
             }
         }
     </script>
